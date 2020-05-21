@@ -7,10 +7,9 @@ mutable struct VanDerWaalsEquationOfState <: AbstractEquationOfState
     a::Float64
     b::Float64
 
-    function VanDerWaalsEquationOfState()
-        this = new()
+    function VanDerWaalsEquationOfState(R::Float64, a::Float64, b::Float64)
+        this = new(R,a,b)
     end
-
 end
 
 mutable struct IdealGasEquationOfState <: AbstractEquationOfState

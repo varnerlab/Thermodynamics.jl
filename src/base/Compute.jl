@@ -15,6 +15,11 @@ end
 
 function compute_pressure_vdw(eos::VanDerWaalsEquationOfState, V::Float64, T::Float64)::Float64
 
+    # get R, a and b from the eos wrapper -
+    R = eos.R
+    a = eos.a
+    b = eos.b
+
     # check - is V = 0
     if (V==0.0)
         throw(ArgumentError("Volume == 0: attraction term is singular"))
@@ -22,14 +27,9 @@ function compute_pressure_vdw(eos::VanDerWaalsEquationOfState, V::Float64, T::Fl
         throw(ArgumentError("Volume == b: singular repulsion term"))
     end
 
-    # get R from the eos wrapper -
-    R = eos.R
-    a = eos.a
-    b = eos.b
-
     # compute terms -
     repulsion = (R*T)/(V-b)
-    attraction = (a^2)/(V^2)
+    attraction = a/(V^2)
 
     # return pressure -
     return (repulsion - attraction)
