@@ -2,3 +2,7 @@ name = "Thermodynamics"
 uuid = "98fc9bf4-965c-476d-80b7-59a8e2f5ff9c"
 authors = ["Jeffrey Varner <jvarner@pooksoft.com>"]
 version = "0.1.0"
+
+[deps]
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
