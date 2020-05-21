@@ -4,9 +4,9 @@ module Thermodynamics
 include("./Include.jl")
 
 # export methods -
-export P
-export T
-export V
+export pressure
+export temperature
+export volume
 
 # export types -
 export AbstractEquationOfState

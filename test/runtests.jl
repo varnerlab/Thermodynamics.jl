@@ -12,7 +12,7 @@ function compute_pressure_ideal_gas_test()
     T = 293.15  # K
     V = 0.15    # L
     P_true = (R*T)/(V)
-    P_calc = P(eos_model, V, T)
+    P_calc = pressure(eos_model, V, T)
 
     # compute -
     return (P_calc == P_true)
@@ -30,7 +30,7 @@ function compute_pressure_vdw_test()
     T = 293.15  # K
     V = 0.15    # L
     P_true = (R*T)/(V-b) - a/V^2
-    P_calc = P(eos_model,V,T)
+    P_calc = pressure(eos_model,V,T)
 
     # compute -
     return (P_calc == P_true)

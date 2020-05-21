@@ -23,4 +23,11 @@ mutable struct IdealGasEquationOfState <: AbstractEquationOfState
 end
 
 mutable struct MartinHouEquationOfState <: AbstractEquationOfState
+
+    # parameters -
+    parameters::Dict{String,Any}
+
+    function MartinHouEquationOfState(parameterDict::Dict{String, Any})
+        this = new(parameterDict)
+    end
 end
