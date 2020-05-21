@@ -1,0 +1,4 @@
+name = "Thermodynamics"
+uuid = "98fc9bf4-965c-476d-80b7-59a8e2f5ff9c"
+authors = ["Jeffrey Varner <jvarner@pooksoft.com>"]
+version = "0.1.0"
