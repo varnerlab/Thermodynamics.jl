@@ -23,7 +23,9 @@ function obj_function_volume_vdw(x, eos::VanDerWaalsEquationOfState, P::Float64,
     # return -
     return (err*err) + 10000.0*(p_term_1 + p_term_2)
 end
+# -------------------------------------------------------------------------- #
 
+# --- Ideal gas EOS ------------------------------------------------------------------------------- #
 function compute_volume_ideal_gas(eos::IdealGasEquationOfState, P::Float64, T::Float64)::Float64
 
     # check - is V = 0
@@ -66,6 +68,7 @@ function compute_temperature_ideal_gas(eos::IdealGasEquationOfState, P::Float64,
     return (P*V)/(R)
 end
 
+# --- Van der Waals EOS ----------------------------------------------------------------------------- #
 function compute_volume_vdw(eos::VanDerWaalsEquationOfState, P::Float64, T::Float64; V::Float64 = 1.0)::Float64
 
     # setup the calculation -
@@ -119,6 +122,40 @@ function compute_temperature_vdw(eos::VanDerWaalsEquationOfState, P::Float64, V:
     return ((V-b)/R)*(P+a/V^2)
 end
 
+# --- Peng Robinson EOS --------------------------------------------------------------------------- #
+function compute_pressure_pr(eos::PengRobinsonEquationOfState, V::Float64, T::Float64)::Float64
+
+    # get parameters from eos -
+    R = eos.R
+    a = eos.a
+    b = eos.b
+    𝞳 = eos.𝞳
+    Tc = eos.Tc
+
+    # check - is V = 0, or V - b = 0?
+    if (V==0.0)
+        throw(ArgumentError("Volume == 0: attraction term is singular"))
+    elseif ((V-b) == 0.0)
+        throw(ArgumentError("Volume == b: singular repulsion term"))
+    end
+
+    # compute terms -
+    Tr = T/Tc
+    𝜶 = (1+𝞳*(1-Tr^0.5))^2
+    repulsion = (R*T)/(V-b)
+    attraction = (a*𝜶)/(V^2+2*b*V-b^2)
+
+    # return -
+    return (repulsion - attraction)
+end
+
+function compute_volume_pr(eos::PengRobinsonEquationOfState, P::Float64, T::Float64)::Float64
+end
+
+function compute_temperature_pr(eos::PengRobinsonEquationOfState, P::Float64, V::Float64)::Float64
+end
+
+# --- Martin-Hou EOS ----------------------------------------------------------------------------- #
 function compute_volume_mh(eos::MartinHouEquationOfState, V::Float64, T::Float64)::Float64
     
     # get parameters from the model -
@@ -233,6 +270,8 @@ function pressure(eos::AbstractEquationOfState, V::Float64, T::Float64)::Float64
         return compute_pressure_vdw(eos,V,T)
     elseif (typeof(eos) == MartinHouEquationOfState)
         return compute_pressure_mh(eos, V, T)
+    elseif (typeof(eos) == PengRobinsonEquationOfState)
+        return compute_pressure_pr(eos, V, T)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
@@ -246,6 +285,8 @@ function volume(eos::AbstractEquationOfState, P::Float64, T::Float64)::Float64
         return compute_volume_vdw(eos, P, T)
     elseif (typeof(eos) == MartinHouEquationOfState)
         return compute_volume_mh(eos, P, T)
+    elseif (typeof(eos) == PengRobinsonEquationOfState)
+        return compute_volume_pr(eos, P, T)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
@@ -258,6 +299,8 @@ function temperature(eos::AbstractEquationOfState,P::Float64,V::Float64)::Float6
         return compute_temperature_vdw(eos, P, V)
     elseif (typeof(eos) == MartinHouEquationOfState)
         return compute_temperature_mh(eos, P, V)
+    elseif (typeof(eos) == PengRobinsonEquationOfState)
+        return compute_temperature_pr(eos, P, V)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
