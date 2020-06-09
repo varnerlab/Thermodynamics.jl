@@ -354,16 +354,16 @@ function pressure(eos::AbstractEquationOfState, V::Float64, T::Float64)::Float64
     end
 end
 
-function volume(eos::AbstractEquationOfState, P::Float64, T::Float64)::Float64
+function volume(eos::AbstractEquationOfState, P::Float64, T::Float64; V::Float64=1.0)::Float64
     
     if typeof(eos) == IdealGasEquationOfState
         return compute_volume_ideal_gas(eos, P, T)
     elseif (typeof(eos) == VanDerWaalsEquationOfState)
-        return compute_volume_vdw(eos, P, T)
+        return compute_volume_vdw(eos, P, T; V=V)
     elseif (typeof(eos) == MartinHouEquationOfState)
         return compute_volume_mh(eos, P, T)
     elseif (typeof(eos) == PengRobinsonEquationOfState)
-        return compute_volume_pr(eos, P, T)
+        return compute_volume_pr(eos, P, T; V=V)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
