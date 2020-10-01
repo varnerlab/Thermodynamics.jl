@@ -14,6 +14,7 @@ export compute_complex_compressibility_lk
 export buildVanDerWaalsEquationOfState
 export buildPengRobinsonEquationOfState
 export buildLeeKeslerEquationOfState
+export buildRedlichKwongEquationOfState
 export buildSingleComponentWorkingFluid
 
 # export types -
@@ -24,6 +25,7 @@ export VanDerWaalsEquationOfState
 export IdealGasEquationOfState
 export MartinHouEquationOfState
 export LeeKeslerEquationOfState
+export RedlichKwongEquationOfState
 
 export SingleComponentWorkingFluid
 export MulticomponentWorkingFluid

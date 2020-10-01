@@ -11,6 +11,27 @@ function buildSingleComponentWorkingFluid(propertyDictionary::Dict{AbstractStrin
     return SingleComponentWorkingFluid(Tc,Pc,Vc,ω;R=R)
 end
 
+
+function buildRedlichKwongEquationOfState(fluid::SingleComponentWorkingFluid)::RedlichKwongEquationOfState
+
+    # compute the analytical RK parameters -
+    # get the critical parameters -
+    Tc = fluid.Tc
+    Pc = fluid.Pc
+    Vc = fluid.Vc
+    R = fluid.R
+
+    # compute a, b from the critical parameters -
+    a = 0.42748*((R^2)*(Tc)^2.5)/(Pc)
+    b = 0.08664*(R*Tc)/Pc
+
+    # build a RK EOS model -
+    eos_model = RedlichKwongEquationOfState(R,a,b)
+
+    # return -
+    return eos_model
+end
+
 function buildVanDerWaalsEquationOfState(fluid::SingleComponentWorkingFluid)::VanDerWaalsEquationOfState
 
     # compute the analytical vdw parameters -

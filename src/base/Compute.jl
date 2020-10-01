@@ -24,6 +24,55 @@ function obj_function_volume_vdw(x, eos::VanDerWaalsEquationOfState, P::Float64,
     return (err*err) + 10000.0*(p_term_1 + p_term_2)
 end
 
+function obj_function_volume_rk(x, eos::VanDerWaalsEquationOfState, P::Float64, T::Float64)
+
+    # get R, a and b from the eos wrapper -
+    R = eos.R
+    a = eos.a
+    b = eos.b
+
+    # get x values -
+    V = x[1]
+
+    # compute terms -
+    repulsion = (R*T)/(V-b)
+    attraction = a/(sqrt(T)*(V*(V+b)))
+
+    # compute error -
+    err = (P - repulsion + attraction)
+
+    # penalty terms -
+    p_term_1 = max(0,-1*V)
+    p_term_2 = max(0,-1*(V-b))
+
+    # return -
+    return (err*err) + 10000.0*(p_term_1 + p_term_2)
+end
+
+function obj_function_temperature_rk(x, eos::VanDerWaalsEquationOfState, P::Float64, V::Float64)
+
+    # get R, a and b from the eos wrapper -
+    R = eos.R
+    a = eos.a
+    b = eos.b
+
+    # get x values -
+    T = x[1]
+
+    # compute terms -
+    repulsion = (R*T)/(V-b)
+    attraction = a/(sqrt(T)*(V*(V+b)))
+
+    # compute error -
+    err = (P - repulsion + attraction)
+
+    # penalty terms -
+    p_term_1 = max(0,-1*T)
+
+    # return -
+    return (err*err) + 10000.0*(p_term_1)
+end
+
 function obj_function_volume_pr(x, eos::PengRobinsonEquationOfState, P::Float64, T::Float64)
 
     # get parameters from eos -
@@ -231,9 +280,61 @@ function compute_temperature_pr(eos::PengRobinsonEquationOfState, P::Float64, V:
     # return -
     return Optim.minimizer(opt_result)[1]
 end
+# --------------------------------------------------------------------------------------------------- #
+
+# --- Redlich-Kwong EOS ----------------------------------------------------------------------------- #
+function compute_volume_rk(eos::RedlichKwongEquationOfState, P::Float64, T::Float64; V::Float64=1.0)::Float64
+
+    # setup the calculation -
+    xinitial = [V]
+    OF(p) = obj_function_volume_rk(p, eos, P, T)
+    
+    # call the optimizer -
+    opt_result = optimize(OF,xinitial,BFGS())
+    
+    # return -
+    return Optim.minimizer(opt_result)[1]
+end
+
+function compute_pressure_rk(eos::RedlichKwongEquationOfState, V::Float64, T::Float64)::Float64
+
+    # get R, a and b from the eos wrapper -
+    R = eos.R
+    a = eos.a
+    b = eos.b
+
+    # check - is V = 0
+    if (V==0.0)
+        throw(ArgumentError("Volume == 0: attraction term is singular"))
+    elseif ((V-b) == 0.0)
+        throw(ArgumentError("Volume == b: singular repulsion term"))
+    end
+
+    # compute terms -
+    repulsion = (R*T)/(V-b)
+    attraction = a/(sqrt(T)*(V*(V+b)))
+
+    # return pressure -
+    return (repulsion - attraction)
+end
+
+function compute_temperature_rk(eos::RedlichKwongEquationOfState, P::Float64, V::Float64; T::Float64=1.0)::Float64
+
+    # setup the calculation -
+    xinitial = [T]
+    OF(p) = obj_function_temperature_rk(p, eos, P, V)
+      
+    # call the optimizer -
+    opt_result = optimize(OF,xinitial,BFGS())
+      
+    # return -
+    return Optim.minimizer(opt_result)[1]
+end
+# --------------------------------------------------------------------------------------------------- # 
+
 
 # --- Martin-Hou EOS ----------------------------------------------------------------------------- #
-function compute_volume_mh(eos::MartinHouEquationOfState, V::Float64, T::Float64)::Float64
+function compute_volume_mh(eos::MartinHouEquationOfState, P::Float64, T::Float64; V::Float64)::Float64
     
     # get parameters from the model -
     parameter_dict = eos.parameters
@@ -349,12 +450,14 @@ function pressure(eos::AbstractEquationOfState, V::Float64, T::Float64)::Float64
         return compute_pressure_mh(eos, V, T)
     elseif (typeof(eos) == PengRobinsonEquationOfState)
         return compute_pressure_pr(eos, V, T)
+    elseif (typeof(eos) == RedlichKwongEquationOfState)
+        return compute_pressure_rk(eos,V,T)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
 end
 
-function volume(eos::AbstractEquationOfState, P::Float64, T::Float64; V::Float64=1.0)::Float64
+function volume(eos::AbstractEquationOfState, P::Float64, T::Float64; V::Float64 = 1.0)::Float64
     
     if typeof(eos) == IdealGasEquationOfState
         return compute_volume_ideal_gas(eos, P, T)
@@ -364,12 +467,14 @@ function volume(eos::AbstractEquationOfState, P::Float64, T::Float64; V::Float64
         return compute_volume_mh(eos, P, T)
     elseif (typeof(eos) == PengRobinsonEquationOfState)
         return compute_volume_pr(eos, P, T; V=V)
+    elseif (typeof(eos) == RedlichKwongEquationOfState)
+        return compute_volume_rk(eos, P, T; V=V)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end
 end
 
-function temperature(eos::AbstractEquationOfState,P::Float64,V::Float64)::Float64
+function temperature(eos::AbstractEquationOfState, P::Float64, V::Float64; T::Float64 = 1.0)::Float64
     if typeof(eos) == IdealGasEquationOfState
         return compute_temperature_ideal_gas(eos, P, V)
     elseif (typeof(eos) == VanDerWaalsEquationOfState)
@@ -378,6 +483,8 @@ function temperature(eos::AbstractEquationOfState,P::Float64,V::Float64)::Float6
         return compute_temperature_mh(eos, P, V)
     elseif (typeof(eos) == PengRobinsonEquationOfState)
         return compute_temperature_pr(eos, P, V)
+    elseif (typeof(eos) == RedlichKwongEquationOfState)
+        return compute_temperature_rk(eos, P, V; T=T)
     else
         throw(ArgumentError("$(typeof(eos)) is not supported"))
     end

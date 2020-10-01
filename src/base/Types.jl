@@ -19,6 +19,17 @@ end
 mutable struct MulticomponentWorkingFluid <: AbstractWorkingFluid
 end
 
+mutable struct RedlichKwongEquationOfState <: AbstractEquationOfState
+
+    R::Float64
+    a::Float64
+    b::Float64
+
+    function RedlichKwongEquationOfState(R::Float64, a::Float64, b::Float64)
+        this = new(R,a,b)
+    end
+end
+
 mutable struct VanDerWaalsEquationOfState <: AbstractEquationOfState
 
     R::Float64
